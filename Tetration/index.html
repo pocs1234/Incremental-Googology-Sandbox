@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html>
+   <head>
+      <title>Incremental Googology</title>
+      <link rel="stylesheet" type="text/css" href="index.css">
+      <meta charset="UTF-8">
+      <meta name="author" content="hyp_cos">
+      <meta name="keywords" content="big number, large number, googology, incremental, idle, clicker">
+      <script>/******/ (() => { // webpackBootstrap
+      /******/ 	"use strict";
+      var __webpack_exports__ = {};
+      
+      ;// CONCATENATED MODULE: ../core/pkg/flash-identifiers.js
+      const FLASH_MIMETYPE = "application/x-shockwave-flash";
+      const FUTURESPLASH_MIMETYPE = "application/futuresplash";
+      const FLASH7_AND_8_MIMETYPE = "application/x-shockwave-flash2-preview";
+      const FLASH_MOVIE_MIMETYPE = "application/vnd.adobe.flash.movie";
+      const FLASH_ACTIVEX_CLASSID = "clsid:D27CDB6E-AE6D-11cf-96B8-444553540000";
+      
+      ;// CONCATENATED MODULE: ../core/pkg/plugin-polyfill.js
+      
+      /**
+       * Replacement object for `MimeTypeArray` that lets us install new fake mime
+       * types.
+       *
+       * Unlike plugins we can at least enumerate mime types in Firefox, so we don't
+       * lose data.
+       *
+       * We also expose a method called `install` which adds a new plugin. This is
+       * used to falsify Flash detection. If the existing `navigator.mimeTypes` has an
+       * `install` method, you should not use `RuffleMimeTypeArray` as some other
+       * plugin emulator is already present.
+       */
+      class RuffleMimeTypeArray {
+          constructor(mimeTypes) {
+              this.__mimeTypes = [];
+              this.__namedMimeTypes = {};
+              if (mimeTypes) {
+                  for (let i = 0; i < mimeTypes.length; i++) {
+                      this.install(mimeTypes[i]);
+                  }
+              }
+          }
+          /**
+           * Install a MIME Type into the array.
+           *
+           * @param mimeType The mime type to install
+           */
+          install(mimeType) {
+              const index = this.__mimeTypes.length;
+              this.__mimeTypes.push(mimeType);
+              this.__namedMimeTypes[mimeType.type] = mimeType;
+              this[mimeType.type] = mimeType;
+              this[index] = mimeType;
+          }
+          item(index) {
+              return this.__mimeTypes[index];
+          }
+          namedItem(name) {
+              return this.__namedMimeTypes[name];
+          }
+          get length() {
+              return this.__mimeTypes.length;
+          }
+          [Symbol.iterator]() {
+              return this.__mimeTypes[Symbol.iterator]();
+          }
+      }
+      /**
+       * Equivalent object to `Plugin` that allows us to falsify plugins.
+       */
+      class RufflePlugin extends RuffleMimeTypeArray {
+          constructor(name, description, filename) {
+              super();
+              this.name = name;
+              this.description = description;
+              this.filename = filename;
+          }
+      }
+      /**
+       * Replacement object for `PluginArray` that lets us install new fake plugins.
+       *
+       * This object needs to wrap the native plugin array, since the user might have
+       * actual plugins installed. Firefox doesn't let us enumerate the array, though,
+       * which has some consequences. Namely, we can't actually perfectly wrap the
+       * native plugin array, at least unless there's some secret "unresolved object
+       * property name handler" that I've never known before in JS...
+       *
+       * We can still wrap `namedItem` perfectly at least.
+       *
+       * We also expose a method called `install` which adds a new plugin. This is
+       * used to falsify Flash detection. If the existing `navigator.plugins` has an
+       * `install` method, you should not use `RufflePluginArray` as some other plugin
+       * emulator is already present.
+       */
+      class RufflePluginArray {
+          constructor(plugins) {
+              this.__plugins = [];
+              this.__namedPlugins = {};
+              for (let i = 0; i < plugins.length; i++) {
+                  this.install(plugins[i]);
+              }
+          }
+          install(plugin) {
+              const index = this.__plugins.length;
+              this.__plugins.push(plugin);
+              this.__namedPlugins[plugin.name] = plugin;
+              this[plugin.name] = plugin;
+              this[index] = plugin;
+          }
+          item(index) {
+              return this.__plugins[index];
+          }
+          namedItem(name) {
+              return this.__namedPlugins[name];
+          }
+          refresh() {
+              // Nothing to do, we just need to define the method.
+          }
+          [Symbol.iterator]() {
+              return this.__plugins[Symbol.iterator]();
+          }
+          get length() {
+              return this.__plugins.length;
+          }
+      }
+      /**
+       * A fake plugin designed to trigger Flash detection scripts.
+       */
+      const FLASH_PLUGIN = new RufflePlugin("Shockwave Flash", "Shockwave Flash 32.0 r0", "ruffle.js");
+      FLASH_PLUGIN.install({
+          type: FUTURESPLASH_MIMETYPE,
+          description: "Shockwave Flash",
+          suffixes: "spl",
+          enabledPlugin: FLASH_PLUGIN,
+      });
+      FLASH_PLUGIN.install({
+          type: FLASH_MIMETYPE,
+          description: "Shockwave Flash",
+          suffixes: "swf",
+          enabledPlugin: FLASH_PLUGIN,
+      });
+      FLASH_PLUGIN.install({
+          type: FLASH7_AND_8_MIMETYPE,
+          description: "Shockwave Flash",
+          suffixes: "swf",
+          enabledPlugin: FLASH_PLUGIN,
+      });
+      FLASH_PLUGIN.install({
+          type: FLASH_MOVIE_MIMETYPE,
+          description: "Shockwave Flash",
+          suffixes: "swf",
+          enabledPlugin: FLASH_PLUGIN,
+      });
+      /**
+       * Install a fake plugin such that detectors will see it in `navigator.plugins`.
+       *
+       * This function takes care to check if the existing implementation of
+       * `navigator.plugins` already accepts fake plugin entries. If so, it will use
+       * that version of the plugin array. This allows the plugin polyfill to compose
+       * across multiple plugin emulators with the first emulator's polyfill winning.
+       *
+       * @param plugin The plugin to install
+       */
+      function installPlugin(plugin) {
+          if (!("install" in navigator.plugins) || !navigator.plugins["install"]) {
+              Object.defineProperty(navigator, "plugins", {
+                  value: new RufflePluginArray(navigator.plugins),
+                  writable: false,
+              });
+          }
+          const plugins = navigator.plugins;
+          plugins.install(plugin);
+          if (plugin.length > 0 &&
+              (!("install" in navigator.mimeTypes) || !navigator.mimeTypes["install"])) {
+              Object.defineProperty(navigator, "mimeTypes", {
+                  value: new RuffleMimeTypeArray(navigator.mimeTypes),
+                  writable: false,
+              });
+          }
+          const mimeTypes = navigator.mimeTypes;
+          for (let i = 0; i < plugin.length; i += 1) {
+              mimeTypes.install(plugin[i]);
+          }
+      }
+      
+      ;// CONCATENATED MODULE: ./src/plugin-polyfill.ts
+      // This file is compiled and then injected into content.ts's compiled form.
+      
+      installPlugin(FLASH_PLUGIN);
+      
+      /******/ })()
+      ;</script><script src="chrome-extension://donbcfbmhbcapadipfkeojnmajbakjdc/dist/ruffle.js?id=5406436331"></script>
+      </head>
+      <body>
+         <script src="https://cdn.jsdelivr.net/npm/vue@2.6.10/dist/vue.js"></script>
+         <div id="game" style="min-height: 649px;">
+            This version is save to play, if there are any bugs tell me on discord<br>
+           Your number is
+            <span style="font-size: 50px;">5.824e64</span><br>
+            Your number is gaining 1.388e63 per second<br> <br> <div class="tab"><button>Options</button> <button>Achievements</button> <button>Statistics</button> <button style="position: relative;" disabled="disabled">BMS<span class="tooltip">Bashicu matrix system</span></button> <!----> <!----></div> <div><!----> <div class="left"><button disabled="disabled" class="cell cell4"><b class="big">(0)(1)[3]</b><br>
+                     Reset to unlock a new base number<br>
+                     Requirement: 1e977
+                     <span class="tooltip">Reset your number, all zero-only BM and unlockers</span></button></div> <button class="celldark itemrow2" style="font-size: 24px;">
+                  Buy max of all zero-only Bashicu matrices
+               </button> <div class="left"><div class="column2"><button class="cell cell2" disabled="disabled"><b>Unlock (0)(0)(0)(0)(0)(0)(0)[2]</b><br>
+                        Reset to boost 4 initial (0)...(0)[2]
+                        by ×16.00<br>
+                        Requirement: 2 (0)(0)(0)(0)(0)(0)[2]
+                        <span class="tooltip">Reset your number and all zero-only BM</span></button><button class="cell"><b>(0)[2]</b><br>
+               5.135e26<br>
+               ×1.845e19<span></span><br>
+               Cost: 2.511e58
+            <span class="tooltip">Multiply number gain</span></button><button class="cell"><b>(0)(0)[2]</b><br>
+               6.982e15<br>
+               ×4.295e9<span></span><br>
+               Cost: 1.004e59
+            <span class="tooltip">Generate (0)[2]</span></button><button class="cell"><b>(0)(0)(0)[2]</b><br>
+               4.578e9<br>
+               ×6.554e4<span></span><br>
+               Cost: 1.607e60
+            <span class="tooltip">Generate (0)(0)[2]</span></button><button class="cell"><b>(0)(0)(0)(0)[2]</b><br>
+               5.261e5<br>
+               ×256.0<span></span><br>
+               Cost: 4.114e62
+            <span class="tooltip">Generate (0)(0)(0)[2]</span></button><button class="cell" disabled="disabled"><b>(0)(0)(0)(0)(0)[2]</b><br>
+               1175<br>
+               ×8.000<span></span><br>
+               Cost: 2.696e67
+            <span class="tooltip">Generate (0)(0)(0)(0)[2]</span></button><button class="cell"><b>(0)(0)(0)(0)(0)(0)[2]</b><br>
+               1.000<br>
+               ×8.000<span></span><br>
+               Cost: 6.277e57
+            <span class="tooltip">Generate (0)(0)(0)(0)(0)[2]</span></button></div><div class="column2"><button disabled="disabled" class="cell cell2"><b>Unlock (0)(0)(0)(0)(0)(0)(0)[3]</b><br>
+                        Reset to boost 3 initial (0)...(0)[3]
+                        and base-2 unlocker by ×4.000<br>
+                        Requirement: 3 (0)(0)(0)(0)(0)(0)[3]
+                        <span class="tooltip">Reset your number, all zero-only BM and previous unlockers</span></button><button class="cell"><b>(0)(0)[3]</b><br>
+               1.398e11<br>
+               ×1.049e6<span></span><br>
+               Cost: 1.456e59
+            <span class="tooltip">Multiply number gain</span></button><button class="cell" disabled="disabled"><b>(0)(0)(0)[3]</b><br>
+               1.248e7<br>
+               ×512.0<span></span><br>
+               Cost: 7.736e64
+            <span class="tooltip">Generate (0)(0)[3]</span></button><button class="cell" disabled="disabled"><b>(0)(0)(0)(0)[3]</b><br>
+               5.046e4<br>
+               ×8.000<span></span><br>
+               Cost: 5.075e68
+            <span class="tooltip">Generate (0)(0)(0)[3]</span></button><button class="cell" disabled="disabled"><b>(0)(0)(0)(0)(0)[3]</b><br>
+               125.5<br>
+               ×8.000<span></span><br>
+               Cost: 2.185e76
+            <span class="tooltip">Generate (0)(0)(0)(0)[3]</span></button><button class="cell" disabled="disabled"><b>(0)(0)(0)(0)(0)(0)[3]</b><br>
+               1.000<br>
+               ×1.000<span></span><br>
+               Cost: 4.048e91
+            <span class="tooltip">Generate (0)(0)(0)(0)(0)[3]</span></button></div></div></div></div>
+         original game by: hypcos
+         <br>
+         original mod by: lool8421
+         <br>
+         
+         <a href="https://hypcos.github.io/incremental-googology/Tetration/">Incremental Googology</a>
+         <br>
+         <a href="https://incremental-googology-reworked.glitch.me/Tetration/">Incremental Googology Reworked</a>
+         <br>
+         <script src="arithmetic.js"></script>
+         <script src="display-number.js"></script>
+         <script src="versions.js"></script>
+         <script src="save-load.js"></script>
+         <script src="achievement.js"></script>
+         <script src="component.js"></script>
+         <script src="index.js"></script>
+         
+         </body>
+</html>
